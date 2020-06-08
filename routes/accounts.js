@@ -32,6 +32,35 @@ router.post('/', (req, res) => {
 
 })
 
+router.post("/transaction", (req, res) => {
+  let params = req.body
+
+  fs.readFile(fileName, "utf8", (err, data) => {
+    try {
+      if (err) throw err
+
+      let json = JSON.parse(data)
+      const index = json.accounts.findIndex(account => account.id === params.id)
+
+      if((params.value < 0) && ((json.accounts[index].balance + params.value) < 0)){
+        throw new Error("Não há saldo suficiente.")
+      }
+      
+      json.accounts[index].balance += params.value
+      fs.writeFile(fileName, JSON.stringify(json), err => {
+        if (err) {
+          res.status(400).send({ error: err.message })
+        } else {
+          res.send(json.accounts[index])
+        }
+      })
+
+    } catch {
+      res.status(400).send({ error: err.message })
+    }
+  })
+})
+
 router.get('/', (req, res) => {
 
   fs.readFile(fileName, "utf8", (err, data) => {
@@ -75,13 +104,13 @@ router.get('/', (req, res) => {
 
 router.get("/:id", (req, res) => {
 
-  try{
+  try {
     fs.readFile(fileName, "utf8", (err, data) => {
       if (!err) {
         let json = JSON.parse(data)
         const result = json.accounts.find(account => account.id === parseInt(req.params.id))
 
-        if(result) {
+        if (result) {
           res.send(result)
         } else {
           res.send("nenhum registro encontrado.")
@@ -92,7 +121,7 @@ router.get("/:id", (req, res) => {
       }
     })
 
-  } catch(err) {
+  } catch (err) {
     res.status(400).send({ error: err.message })
   }
 
@@ -100,18 +129,16 @@ router.get("/:id", (req, res) => {
 
 router.delete("/:id", (req, res) => {
 
-
-  
   fs.readFile(fileName, "utf8", (err, data) => {
-    
-    try{
-      
-      if(err) throw err
+
+    try {
+
+      if (err) throw err
 
       let json = JSON.parse(data)
       const result = json.accounts.filter(account => account.id !== parseInt(req.params.id))
 
-      if(result) {
+      if (result) {
         res.send(result)
       } else {
         res.send("nenhum registro encontrado.")
@@ -125,11 +152,36 @@ router.delete("/:id", (req, res) => {
         }
       })
 
-      } catch {
-        res.status(400).send({ error: err.message })
-      }
-    })
+    } catch {
+      res.status(400).send({ error: err.message })
+    }
+  })
 
+})
+
+router.put("/", (req, res) => {
+  let newAccount = req.body
+
+  fs.readFile(fileName, "utf8", (err, data) => {
+    try {
+      if (err) throw err
+
+      let json = JSON.parse(data)
+      const oldIndex = json.accounts.findIndex(account => account.id === newAccount.id)
+      json.accounts[oldIndex] = newAccount
+
+      fs.writeFile(fileName, JSON.stringify(json), err => {
+        if (err) {
+          res.status(400).send({ error: err.message })
+        } else {
+          res.end()
+        }
+      })
+
+    } catch {
+      res.status(400).send({ error: err.message })
+    }
+  })
 })
 
 module.exports = router
