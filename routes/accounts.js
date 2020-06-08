@@ -56,7 +56,7 @@ router.get('/', (req, res) => {
 
         fs.writeFile(fileName, JSON.stringify(json), err => {
           if (err) {
-            console.log(err)
+            res.status(400).send({ error: err.message })
           } else {
             res.end()
           }
@@ -70,6 +70,65 @@ router.get('/', (req, res) => {
     }
 
   })
+
+})
+
+router.get("/:id", (req, res) => {
+
+  try{
+    fs.readFile(fileName, "utf8", (err, data) => {
+      if (!err) {
+        let json = JSON.parse(data)
+        const result = json.accounts.find(account => account.id === parseInt(req.params.id))
+
+        if(result) {
+          res.send(result)
+        } else {
+          res.send("nenhum registro encontrado.")
+        }
+
+      } else {
+        res.status(400).send({ error: err.message })
+      }
+    })
+
+  } catch(err) {
+    res.status(400).send({ error: err.message })
+  }
+
+})
+
+router.delete("/:id", (req, res) => {
+
+
+  
+  fs.readFile(fileName, "utf8", (err, data) => {
+    
+    try{
+      
+      if(err) throw err
+
+      let json = JSON.parse(data)
+      const result = json.accounts.filter(account => account.id !== parseInt(req.params.id))
+
+      if(result) {
+        res.send(result)
+      } else {
+        res.send("nenhum registro encontrado.")
+      }
+
+      fs.writeFile(fileName, JSON.stringify(json), err => {
+        if (err) {
+          res.status(400).send({ error: err.message })
+        } else {
+          res.end()
+        }
+      })
+
+      } catch {
+        res.status(400).send({ error: err.message })
+      }
+    })
 
 })
 
