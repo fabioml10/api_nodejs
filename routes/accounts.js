@@ -1,5 +1,6 @@
 import express from 'express'
 import { promises } from 'fs'
+import cors from 'cors'
 
 const readFile = promises.readFile
 const writeFile = promises.writeFile
@@ -52,7 +53,7 @@ router.post("/transaction", async (req, res) => {
 
 })
 
-router.get('/', async (req, res) => {
+router.get('/', cors(), async (req, res) => {
 
   try {
     let data = await readFile(fileName, "utf8")

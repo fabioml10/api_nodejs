@@ -2,6 +2,9 @@ import express from 'express'
 import { promises } from 'fs'
 import accountsRouter from './routes/accounts.js'
 import winston from 'winston'
+import swaggerUi from 'swagger-ui-express'
+import { document } from './doc.js'
+import cors from 'cros'
 
 const app = express()
 const port = 3010
@@ -29,7 +32,9 @@ global.logger = winston.createLogger({
 })
 
 app.use(express.json())
+app.use(cors())
 app.use("/account", accountsRouter)
+app.use("/doc", swaggerUi.serve, swaggerUi.setup(document))
 
 app.listen(port, async () => {
   try {
