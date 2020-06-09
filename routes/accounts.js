@@ -12,9 +12,11 @@ router.post('/', async (req, res) => {
     json.accounts.push(account)
 
     await fs.writeFile(fileName, JSON.stringify(json))
+    logger.info(`POST /account - ${JSON.stringify(account)}`)
     res.send(json)
 
   } catch (err) {
+    logger.error(`POST /account - ${err.message}`)
     res.status(400).send({ error: err.message })
   }
 
@@ -36,9 +38,11 @@ router.post("/transaction", async (req, res) => {
     json.accounts[index].balance += params.value
 
     await fs.writeFile(fileName, JSON.stringify(json))
+    logger.info(`POST /account/transaction - ${JSON.stringify(params.id)}`)
     res.send(json.accounts[index])
 
   } catch {
+    logger.error(`POST /account/transaction - ${err.message}`)
     res.status(400).send({ error: err.message })
   }
 
@@ -50,8 +54,10 @@ router.get('/', async (req, res) => {
     let data = await fs.readFile(fileName, "utf8")
     let new_data = JSON.parse(data)
     delete new_data.nextId
+    logger.info(`GET /account - ${JSON.stringify(data)}`)
     res.send(new_data)
   } catch (err) {
+    logger.error(`GET /account - ${err.message}`)
     res.status(400).send({ error: err.message })
   }
 
@@ -63,8 +69,11 @@ router.get("/:id", async (req, res) => {
     let data = await fs.readFile(fileName, "utf8")
     let json = JSON.parse(data)
     const result = json.accounts.find(account => account.id === parseInt(req.params.id))
+    logger.info(`GET /account/:id - ${Jreq.params.id}`)
+
     res.send(result)
   } catch (err) {
+    logger.error(`GET /account/:id - ${err.message}`)
     res.status(400).send({ error: err.message })
   }
 
@@ -80,9 +89,12 @@ router.delete("/:id", async (req, res) => {
 
     await fs.writeFile(fileName, JSON.stringify(json))
 
+    logger.info(`DELETE /account - ${req.params.id}`)
+
     res.send(result)
 
   } catch {
+    logger.error(`DELETE /account - ${err.message}`)
     res.status(400).send({ error: err.message })
   }
 
@@ -98,9 +110,13 @@ router.put("/", async (req, res) => {
     json.accounts[oldIndex] = newAccount
 
     await fs.writeFile(fileName, JSON.stringify(json))
+
+    logger.info(`PUT /account - ${newAccount.id}`)
+
     res.send(json)
 
   } catch {
+    logger.error(`PUT /account - ${err.message}`)
     res.status(400).send({ error: err.message })
   }
 })
