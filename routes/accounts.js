@@ -1,17 +1,21 @@
-let express = require('express')
-let fs = require("fs").promises
-let router = express.Router()
+import express from 'express'
+import { promises } from 'fs'
+
+const readFile = promises.readFile
+const writeFile = promises.writeFile
+
+const router = express.Router()
 
 router.post('/', async (req, res) => {
   let account = req.body
 
   try {
-    let data = await fs.readFile(fileName, "utf8")
+    let data = await readFile(fileName, "utf8")
     let json = JSON.parse(data)
     account = { id: json.nextId++, ...account }
     json.accounts.push(account)
 
-    await fs.writeFile(fileName, JSON.stringify(json))
+    await writeFile(fileName, JSON.stringify(json))
     logger.info(`POST /account - ${JSON.stringify(account)}`)
     res.send(json)
 
@@ -26,7 +30,7 @@ router.post("/transaction", async (req, res) => {
 
   try {
     let params = req.body
-    let data = await fs.readFile(fileName, "utf8")
+    let data = await readFile(fileName, "utf8")
 
     let json = JSON.parse(data)
     const index = json.accounts.findIndex(account => account.id === params.id)
@@ -37,7 +41,7 @@ router.post("/transaction", async (req, res) => {
 
     json.accounts[index].balance += params.value
 
-    await fs.writeFile(fileName, JSON.stringify(json))
+    await writeFile(fileName, JSON.stringify(json))
     logger.info(`POST /account/transaction - ${JSON.stringify(params.id)}`)
     res.send(json.accounts[index])
 
@@ -51,7 +55,7 @@ router.post("/transaction", async (req, res) => {
 router.get('/', async (req, res) => {
 
   try {
-    let data = await fs.readFile(fileName, "utf8")
+    let data = await readFile(fileName, "utf8")
     let new_data = JSON.parse(data)
     delete new_data.nextId
     logger.info(`GET /account - ${JSON.stringify(data)}`)
@@ -66,7 +70,7 @@ router.get('/', async (req, res) => {
 router.get("/:id", async (req, res) => {
 
   try {
-    let data = await fs.readFile(fileName, "utf8")
+    let data = await readFile(fileName, "utf8")
     let json = JSON.parse(data)
     const result = json.accounts.find(account => account.id === parseInt(req.params.id))
     logger.info(`GET /account/:id - ${Jreq.params.id}`)
@@ -82,12 +86,12 @@ router.get("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
 
   try {
-    let data = await fs.readFile(fileName, "utf8")
+    let data = await readFile(fileName, "utf8")
     let json = JSON.parse(data)
     const result = json.accounts.filter(account => account.id !== parseInt(req.params.id))
     json.accounts = result
 
-    await fs.writeFile(fileName, JSON.stringify(json))
+    await writeFile(fileName, JSON.stringify(json))
 
     logger.info(`DELETE /account - ${req.params.id}`)
 
@@ -103,13 +107,13 @@ router.delete("/:id", async (req, res) => {
 router.put("/", async (req, res) => {
   try {
     let newAccount = req.body
-    let data = await fs.readFile(fileName, "utf8")
+    let data = await readFile(fileName, "utf8")
     let json = JSON.parse(data)
     const oldIndex = json.accounts.findIndex(account => account.id === newAccount.id)
 
     json.accounts[oldIndex] = newAccount
 
-    await fs.writeFile(fileName, JSON.stringify(json))
+    await writeFile(fileName, JSON.stringify(json))
 
     logger.info(`PUT /account - ${newAccount.id}`)
 
@@ -121,4 +125,4 @@ router.put("/", async (req, res) => {
   }
 })
 
-module.exports = router
+export default router

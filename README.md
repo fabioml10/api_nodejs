@@ -5,3 +5,5 @@ Simula a api de um banco.
 - Usuário detentor de uma conta bancária.
 - Criação e exclusão da conta.
 - Saque, depósito e verificação de saldo.
+
+node --experimental-modules index.js
