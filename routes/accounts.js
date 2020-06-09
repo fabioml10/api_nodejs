@@ -1,125 +1,18 @@
 let express = require('express')
-let fs = require("fs")
+let fs = require("fs").promises
 let router = express.Router()
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   let account = req.body
-
-  fs.readFile(fileName, "utf8", (err, data) => {
-
-    if (!err) {
-      try {
-        let json = JSON.parse(data)
-        account = { id: json.nextId++, ...account }
-        json.accounts.push(account)
-
-        fs.writeFile(fileName, JSON.stringify(json), err => {
-          if (err) {
-            console.log(err)
-          } else {
-            res.end()
-          }
-        })
-
-      } catch (err) {
-        res.status(400).send({ error: err.message })
-      }
-    } else {
-      res.status(400).send({ error: err.message })
-    }
-
-  })
-
-})
-
-router.post("/transaction", (req, res) => {
-  let params = req.body
-
-  fs.readFile(fileName, "utf8", (err, data) => {
-    try {
-      if (err) throw err
-
-      let json = JSON.parse(data)
-      const index = json.accounts.findIndex(account => account.id === params.id)
-
-      if((params.value < 0) && ((json.accounts[index].balance + params.value) < 0)){
-        throw new Error("Não há saldo suficiente.")
-      }
-      
-      json.accounts[index].balance += params.value
-      fs.writeFile(fileName, JSON.stringify(json), err => {
-        if (err) {
-          res.status(400).send({ error: err.message })
-        } else {
-          res.send(json.accounts[index])
-        }
-      })
-
-    } catch {
-      res.status(400).send({ error: err.message })
-    }
-  })
-})
-
-router.get('/', (req, res) => {
-
-  fs.readFile(fileName, "utf8", (err, data) => {
-    if (!err) {
-      let new_data = JSON.parse(data)
-      delete new_data.nextId
-      res.send(new_data)
-    } else {
-      res.status(400).send({ error: err.message })
-    }
-  })
-
-  let account = req.body
-
-  fs.readFile(fileName, "utf8", (err, data) => {
-
-    if (!err) {
-      try {
-        let json = JSON.parse(data)
-        account = { id: json.nextId++, ...account }
-        json.accounts.push(account)
-
-        fs.writeFile(fileName, JSON.stringify(json), err => {
-          if (err) {
-            res.status(400).send({ error: err.message })
-          } else {
-            res.end()
-          }
-        })
-
-      } catch (err) {
-        res.status(400).send({ error: err.message })
-      }
-    } else {
-      res.status(400).send({ error: err.message })
-    }
-
-  })
-
-})
-
-router.get("/:id", (req, res) => {
 
   try {
-    fs.readFile(fileName, "utf8", (err, data) => {
-      if (!err) {
-        let json = JSON.parse(data)
-        const result = json.accounts.find(account => account.id === parseInt(req.params.id))
+    let data = await fs.readFile(fileName, "utf8")
+    let json = JSON.parse(data)
+    account = { id: json.nextId++, ...account }
+    json.accounts.push(account)
 
-        if (result) {
-          res.send(result)
-        } else {
-          res.send("nenhum registro encontrado.")
-        }
-
-      } else {
-        res.status(400).send({ error: err.message })
-      }
-    })
+    await fs.writeFile(fileName, JSON.stringify(json))
+    res.send(json)
 
   } catch (err) {
     res.status(400).send({ error: err.message })
@@ -127,61 +20,89 @@ router.get("/:id", (req, res) => {
 
 })
 
-router.delete("/:id", (req, res) => {
+router.post("/transaction", async (req, res) => {
 
-  fs.readFile(fileName, "utf8", (err, data) => {
+  try {
+    let params = req.body
+    let data = await fs.readFile(fileName, "utf8")
 
-    try {
+    let json = JSON.parse(data)
+    const index = json.accounts.findIndex(account => account.id === params.id)
 
-      if (err) throw err
-
-      let json = JSON.parse(data)
-      const result = json.accounts.filter(account => account.id !== parseInt(req.params.id))
-
-      if (result) {
-        res.send(result)
-      } else {
-        res.send("nenhum registro encontrado.")
-      }
-
-      fs.writeFile(fileName, JSON.stringify(json), err => {
-        if (err) {
-          res.status(400).send({ error: err.message })
-        } else {
-          res.end()
-        }
-      })
-
-    } catch {
-      res.status(400).send({ error: err.message })
+    if ((params.value < 0) && ((json.accounts[index].balance + params.value) < 0)) {
+      throw new Error("Não há saldo suficiente.")
     }
-  })
+
+    json.accounts[index].balance += params.value
+
+    await fs.writeFile(fileName, JSON.stringify(json))
+    res.send(json.accounts[index])
+
+  } catch {
+    res.status(400).send({ error: err.message })
+  }
 
 })
 
-router.put("/", (req, res) => {
-  let newAccount = req.body
+router.get('/', async (req, res) => {
 
-  fs.readFile(fileName, "utf8", (err, data) => {
-    try {
-      if (err) throw err
+  try {
+    let data = await fs.readFile(fileName, "utf8")
+    let new_data = JSON.parse(data)
+    delete new_data.nextId
+    res.send(new_data)
+  } catch (err) {
+    res.status(400).send({ error: err.message })
+  }
 
-      let json = JSON.parse(data)
-      const oldIndex = json.accounts.findIndex(account => account.id === newAccount.id)
-      json.accounts[oldIndex] = newAccount
+})
 
-      fs.writeFile(fileName, JSON.stringify(json), err => {
-        if (err) {
-          res.status(400).send({ error: err.message })
-        } else {
-          res.end()
-        }
-      })
+router.get("/:id", async (req, res) => {
 
-    } catch {
-      res.status(400).send({ error: err.message })
-    }
-  })
+  try {
+    let data = await fs.readFile(fileName, "utf8")
+    let json = JSON.parse(data)
+    const result = json.accounts.find(account => account.id === parseInt(req.params.id))
+    res.send(result)
+  } catch (err) {
+    res.status(400).send({ error: err.message })
+  }
+
+})
+
+router.delete("/:id", async (req, res) => {
+
+  try {
+    let data = await fs.readFile(fileName, "utf8")
+    let json = JSON.parse(data)
+    const result = json.accounts.filter(account => account.id !== parseInt(req.params.id))
+    json.accounts = result
+
+    await fs.writeFile(fileName, JSON.stringify(json))
+
+    res.send(result)
+
+  } catch {
+    res.status(400).send({ error: err.message })
+  }
+
+})
+
+router.put("/", async (req, res) => {
+  try {
+    let newAccount = req.body
+    let data = await fs.readFile(fileName, "utf8")
+    let json = JSON.parse(data)
+    const oldIndex = json.accounts.findIndex(account => account.id === newAccount.id)
+
+    json.accounts[oldIndex] = newAccount
+
+    await fs.writeFile(fileName, JSON.stringify(json))
+    res.send(json)
+
+  } catch {
+    res.status(400).send({ error: err.message })
+  }
 })
 
 module.exports = router
